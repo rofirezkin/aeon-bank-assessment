@@ -1,6 +1,8 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Design tokens for the app. Every colour is declared for both light and dark
+ * mode so `useTheme()` can hand back a single flat palette to components.
+ *
+ * Learn more: https://docs.expo.dev/guides/color-schemes/
  */
 
 import '@/global.css';
@@ -9,22 +11,38 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#11121A',
+    textSecondary: '#5F6472',
+    textMuted: '#8A8F9C',
+    background: '#F4F5F7',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#E5E6EB',
+    border: '#E6E7EC',
+    primary: '#C2007B',
+    onPrimary: '#FFFFFF',
+    credit: '#0F7A55',
+    debit: '#11121A',
+    skeleton: '#E5E6EB',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#F5F6F8',
+    textSecondary: '#A9AEBA',
+    textMuted: '#7C818D',
+    background: '#0B0B0F',
+    backgroundElement: '#17181D',
+    backgroundSelected: '#26272E',
+    border: '#26272E',
+    primary: '#FF57B4',
+    onPrimary: '#1A0011',
+    credit: '#3ECF9A',
+    debit: '#F5F6F8',
+    skeleton: '#26272E',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+/** Flat palette handed to components by `useTheme()`. */
+export type Theme = Record<ThemeColor, string>;
 
 export const Fonts = Platform.select({
   ios: {
@@ -61,5 +79,11 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  pill: 999,
+} as const;
+
 export const MaxContentWidth = 800;
