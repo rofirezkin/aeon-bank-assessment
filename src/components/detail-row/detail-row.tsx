@@ -1,40 +1,35 @@
-import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type DetailRowProps = {
   label: string;
   value: string;
-  /** Optional trailing control, e.g. a copy button. */
-  accessory?: ReactNode;
-  isLast?: boolean;
+  /** Figures (amounts, reference ids) line up better in the mono face. */
+  mono?: boolean;
 };
 
-/** One label/value line inside the transaction detail card. */
-export function DetailRow({ label, value, accessory, isLast = false }: DetailRowProps) {
+/** One printed line of the receipt: label on the left, value on the right. */
+export function DetailRow({ label, value, mono = false }: DetailRowProps) {
   const theme = useTheme();
 
   return (
-    <View
-      style={[
-        styles.row,
-        !isLast && { borderBottomColor: theme.border, borderBottomWidth: StyleSheet.hairlineWidth },
-      ]}>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
-        {label}
+    <View style={styles.row}>
+      <ThemedText style={[styles.label, { color: theme.textMuted }]}>{label}</ThemedText>
+      <ThemedText style={[styles.value, mono && styles.valueMono]} selectable>
+        {value}
       </ThemedText>
-
-      <View style={styles.valueContainer}>
-        <ThemedText style={styles.value} selectable>
-          {value}
-        </ThemedText>
-        {accessory}
-      </View>
     </View>
   );
+}
+
+/** Torn-paper rule used between receipt sections. */
+export function DashedRule() {
+  const theme = useTheme();
+
+  return <View style={[styles.dashed, { borderTopColor: theme.border }]} />;
 }
 
 const styles = StyleSheet.create({
@@ -43,21 +38,29 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: Spacing.three,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   label: {
     flexShrink: 0,
-  },
-  valueContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: Spacing.two,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    paddingTop: 2,
   },
   value: {
-    flexShrink: 1,
+    flex: 1,
+    fontSize: 14,
     fontWeight: '600',
     textAlign: 'right',
+  },
+  valueMono: {
+    fontFamily: Fonts.mono,
+    letterSpacing: 0.4,
+  },
+  dashed: {
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    marginVertical: Spacing.two,
   },
 });
