@@ -27,46 +27,44 @@ Built for the AEON Bank Mobile Engineer take-home assessment.
 | TypeScript | Strict mode, no `any` |
 | Zustand | [`src/store`](src/store) |
 
-### Beyond the brief
-
-- Debounced search across recipient, transfer detail and reference id
-- Money in / money out filter chips, with the selection kept in Zustand so it
-  survives navigating into a transaction and back
-- Hide-amounts toggle on the summary card
-- The counterparty label follows the direction — the brief ships a single
-  `recipientName` field, so incoming transfers read "Sender name" rather than
-  claiming the other party received the money
-- Pull to refresh, skeleton loading, empty state and an error state with retry
-- Light and dark themes driven by the system setting
-- Haptic feedback on row press, accessibility labels/roles throughout
-- Deep link per transaction (`aeonassessmentapp://transaction-detail?refId=123ABC`)
-
 ---
 
 ## Getting started
 
 ### Prerequisites
 
-- **Node.js 20+** and npm
+- **Node.js 20+** and **Yarn**
 - **Expo Go** on your phone, or an **iOS Simulator** (Xcode) / **Android Emulator** (Android Studio)
 
-### 1. Install dependencies
+### 1. Clone the repository
 
 ```bash
-npm install
+git clone https://github.com/rofirezkin/aeon-bank-assessment.git
 ```
 
-### 2. Start the dev server
+### 2. Move into the project
 
 ```bash
-npx expo start
+cd aeon-bank-assessment
+```
+
+### 3. Install dependencies
+
+```bash
+yarn
+```
+
+### 4. Start the dev server
+
+```bash
+yarn start
 ```
 
 Then pick a target:
 
 - **Physical device** — scan the QR code with the Expo Go app
-- **iOS Simulator** — press `i` in the terminal, or `npm run ios`
-- **Android Emulator** — press `a` in the terminal, or `npm run android`
+- **iOS Simulator** — press `i` in the terminal, or `yarn ios`
+- **Android Emulator** — press `a` in the terminal, or `yarn android`
 
 > The app runs fully in Expo Go — no native build or custom dev client required.
 
@@ -74,9 +72,9 @@ Then pick a target:
 
 | Command | What it does |
 | --- | --- |
-| `npm run ios` | Start and open the iOS Simulator |
-| `npm run android` | Start and open the Android Emulator |
-| `npm run lint` | Run ESLint (`eslint-config-expo`) |
+| `yarn ios` | Start and open the iOS Simulator |
+| `yarn android` | Start and open the Android Emulator |
+| `yarn lint` | Run ESLint (`eslint-config-expo`) |
 | `npx tsc --noEmit` | Type-check the project |
 
 ---
