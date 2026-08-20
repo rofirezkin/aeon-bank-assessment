@@ -1,98 +1,181 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMemo } from "react";
+import { RefreshControl, SectionList, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { FilterBar } from "@/components/filter-bar/filter-bar";
+import { ListEmptyState } from "@/components/list-states/list-empty-state";
+import { ListErrorState } from "@/components/list-states/list-error-state";
+import { TransactionListSkeleton } from "@/components/list-states/transaction-list-skeleton";
+import { ThemedText } from "@/components/themed-text";
+import { TransactionItem } from "@/components/transaction-item/transaction-item";
+import { TransactionSummaryCard } from "@/components/transaction-summary/transaction-summary";
+import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useTheme } from "@/hooks/use-theme";
+import { useGetTransactions } from "@/services/query/use-get-transactions";
+import { useTransactionFilterStore } from "@/store/use-transaction-filter-store";
+import {
+  filterTransactions,
+  groupTransactionsByDate,
+  summariseTransactions,
+  type T_TransactionSummary,
+} from "@/utils/transaction-list";
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+export default function TransactionListScreen() {
+  const theme = useTheme();
+  const { filter, search } = useTransactionFilterStore();
+  const debouncedSearch = useDebounce(search);
+
+  const {
+    data: transactions,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useGetTransactions();
+
+  const visibleTransactions = useMemo(
+    () => filterTransactions(transactions, { filter, search: debouncedSearch }),
+    [transactions, filter, debouncedSearch],
+  );
+  const sections = useMemo(
+    () => groupTransactionsByDate(visibleTransactions),
+    [visibleTransactions],
+  );
+  const summary = useMemo(
+    () => summariseTransactions(visibleTransactions),
+    [visibleTransactions],
+  );
+
+  if (isError) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <SafeAreaView
+        edges={["top"]}
+        style={[styles.screen, { backgroundColor: theme.background }]}
+      >
+        <View style={styles.content}>
+          <ScreenHeader />
+          <ListErrorState
+            description={
+              error?.message ?? "We could not load your transactions."
+            }
+            onRetry={() => refetch()}
+            isRetrying={isRefetching}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+  if (isPending) {
+    return (
+      <SafeAreaView
+        edges={["top"]}
+        style={[styles.screen, { backgroundColor: theme.background }]}
+      >
+        <View style={styles.content}>
+          <ScreenHeader />
+          <TransactionListSkeleton />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <SafeAreaView
+      edges={["top"]}
+      style={[styles.screen, { backgroundColor: theme.background }]}
+    >
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.refId}
+        renderItem={({ item }) => <TransactionItem transaction={item} />}
+        renderSectionHeader={({ section }) => (
+          <ThemedText
+            type="smallBold"
+            themeColor="textSecondary"
+            style={[
+              styles.sectionHeader,
+              { backgroundColor: theme.background },
+            ]}
+          >
+            {section.title}
+          </ThemedText>
+        )}
+        ListHeaderComponent={<ListHeader summary={summary} />}
+        ListEmptyComponent={
+          <ListEmptyState
+            title="No transactions found"
+            description="Try a different keyword or switch the filter back to All."
+          />
+        }
+        contentContainerStyle={styles.content}
+        stickySectionHeadersEnabled={false}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={theme.textSecondary}
+          />
+        }
+      />
+    </SafeAreaView>
   );
 }
 
-export default function HomeScreen() {
+function ListHeader({ summary }: { summary: T_TransactionSummary }) {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View style={styles.header}>
+      <ScreenHeader />
+      <TransactionSummaryCard summary={summary} />
+      <FilterBar />
+    </View>
+  );
+}
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+function ScreenHeader() {
+  return (
+    <View style={styles.titleBlock}>
+      <ThemedText style={styles.title}>Transactions</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        Your latest account activity
+      </ThemedText>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+  content: {
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.five,
+    width: "100%",
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  header: {
+    gap: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
+  titleBlock: {
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.one,
+    gap: Spacing.half,
   },
   title: {
-    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: "700",
+    lineHeight: 34,
   },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  sectionHeader: {
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.two,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
 });
